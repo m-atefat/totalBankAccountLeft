@@ -2,21 +2,26 @@
 
 namespace App\Services;
 
+use App\Exceptions\BankServiceIsNotAvailableException;
 use Closure;
-use Illuminate\Http\Client\RequestException;
+use Exception;
 use Illuminate\Support\Facades\Http;
 
 class BankAAccountLeft
 {
     /**
-     * @throws RequestException
+     * @throws BankServiceIsNotAvailableException
      */
-    public function handle($totalAccountLeft, Closure $next)
+    public function handle($request, Closure $next)
     {
-        $response = Http::get('https://hediehsara.ir/a.php');
-        $response->throw();
+        try {
+            $response = Http::get('https://hediehsara.ir/a.php');
+            $response->throw();
+        } catch (Exception $exception) {
+            throw new BankServiceIsNotAvailableException();
+        }
 
-        $totalAccountLeft += $response->json()[0];
-        return $next($totalAccountLeft);
+        $request += intval($response->body());
+        return $next($request);
     }
 }
